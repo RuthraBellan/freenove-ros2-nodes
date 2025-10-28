@@ -261,7 +261,7 @@ The lane follower uses these techniques from Session 3:
 
 ## 🎓 Course Context
 
-This code is part of **Engineering Teamwork III: AI and Autonomous Systems Lab** at Berlin University of Applied Sciences.
+This code is part of **Engineering Teamwork III: AI and Autonomous Systems Lab** at SRH Berlin University of Applied Sciences.
 
 **Related Sessions:**
 - Session 2: Introduction to ROS (TurtleSim)
