@@ -9,11 +9,27 @@ Session 5: ROS 2 Integration
 
 ## 📋 Overview
 
-This repository contains three ROS 2 nodes that enable autonomous lane-following on the Freenove 4WD Smart Car:
+This repository contains ROS 2 nodes that enable autonomous lane-following on the Freenove 4WD Smart Car.
 
-1. **camera_node.py** - Captures images from Raspberry Pi Camera
-2. **lane_follower_node.py** - Detects lanes using computer vision and calculates steering
-3. **motor_control_node.py** - Controls physical motors based on velocity commands
+### Two Versions Available
+
+**BASIC Version**
+- Simple proportional control
+- Good for understanding computer vision basics
+- Exposes common challenges in lane following
+
+**ADVANCED Version**
+- PID control for smoother operation
+- Left/right lane separation
+- Search behavior when lane is lost
+- Adaptive speed control
+
+### Node Files
+
+1. **camera_node.py** - Captures images from Raspberry Pi Camera using Picamera2
+2. **lane_follower_node.py** - BASIC lane follower (proportional control)
+3. **lane_follower_advanced_node.py** - ADVANCED lane follower (PID, lane separation)
+4. **motor_control_node.py** - Controls physical motors based on velocity commands
 
 ### System Architecture
 
@@ -78,8 +94,11 @@ Edit `~/ros2_ws/src/freenove_car/setup.py`:
 entry_points={
     'console_scripts': [
         'camera_node = freenove_car.camera_node:main',
-        'lane_follower_node = freenove_car.lane_follower_node:main',
         'motor_control_node = freenove_car.motor_control_node:main',
+        
+        # Two versions - students can try both!
+        'lane_follower_basic = freenove_car.lane_follower_node:main',
+        'lane_follower_advanced = freenove_car.lane_follower_advanced_node:main',
     ],
 },
 ```
@@ -106,10 +125,18 @@ source ~/ros2_ws/install/setup.bash
 ros2 run freenove_car camera_node
 ```
 
-**Terminal 2 - Lane Follower Node:**
+**Terminal 2 - Lane Follower Node (Choose Version):**
+
+**BASIC Version**
 ```bash
 source ~/ros2_ws/install/setup.bash
-ros2 run freenove_car lane_follower_node
+ros2 run freenove_car lane_follower_basic
+```
+
+**ADVANCED Version**
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 run freenove_car lane_follower_advanced
 ```
 
 **Terminal 3 - Motor Control Node:**
@@ -123,6 +150,26 @@ sudo -E ros2 run freenove_car motor_control_node
 ### Emergency Stop
 
 Press `Ctrl+C` in the motor control terminal (Terminal 3) to immediately stop the robot.
+
+---
+
+## 🔄 Switching Between Versions
+
+To switch versions, just change which node you run in Terminal 2:
+
+**Try BASIC first:**
+```bash
+ros2 run freenove_car lane_follower_basic
+```
+
+**Then upgrade to ADVANCED:**
+```bash
+ros2 run freenove_car lane_follower_advanced
+```
+
+**Compare:**
+- BASIC: Simple, wobbles on straight sections, stops when lane lost
+- ADVANCED: Smoother, searches when lane lost, handles curves better
 
 ---
 
@@ -273,13 +320,13 @@ This code is part of **Engineering Teamwork III: AI and Autonomous Systems Lab**
 ---
 
 ## 📝 Code Structure
-
 ```
 freenove-ros2-nodes/
-├── camera_node.py           # Camera capture and publishing
-├── lane_follower_node.py    # Lane detection and control logic
-├── motor_control_node.py    # Motor control interface
-└── README.md                # This file
+├── camera_node.py                  # Camera capture (Picamera2)
+├── lane_follower_node.py           # BASIC lane follower
+├── lane_follower_advanced_node.py  # ADVANCED lane follower
+├── motor_control_node.py           # Motor control interface
+└── README.md                       # This file
 ```
 
 ---
