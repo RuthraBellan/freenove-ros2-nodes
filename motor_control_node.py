@@ -9,6 +9,8 @@ Session 5: ROS 2 Integration
 This node bridges ROS 2 to the Freenove motor controller hardware.
 It receives Twist messages (linear and angular velocity) and translates
 them into motor commands for the 4-wheel drive robot.
+
+CORRECTED VERSION - Compatible with Freenove motor.py library
 """
 
 import rclpy
@@ -21,7 +23,7 @@ import os
 sys.path.append(os.path.expanduser('~/Freenove_4WD_Smart_Car_Kit_for_Raspberry_Pi/Code/Server'))
 
 try:
-    from Motor import Motor
+    from motor import Ordinary_Car  # ✅ FIXED: Correct class name
 except ImportError as e:
     print(f"Error importing Freenove Motor library: {e}")
     print("Make sure Freenove code is installed at ~/Freenove_4WD_Smart_Car_Kit_for_Raspberry_Pi/")
@@ -39,7 +41,7 @@ class MotorControlNode(Node):
         
         # Initialize Freenove motor controller
         try:
-            self.motor = Motor()
+            self.motor = Ordinary_Car()  # ✅ FIXED: Correct class name
             self.get_logger().info('Freenove motor controller initialized')
         except Exception as e:
             self.get_logger().error(f'Failed to initialize motor controller: {e}')
@@ -54,7 +56,8 @@ class MotorControlNode(Node):
         )
         
         # Motor control parameters
-        self.base_speed = 100  # Base motor power (0-100)
+        self.base_speed = 2000  # ✅ FIXED: Base motor power (0-4095 range)
+        self.max_speed = 4095   # Maximum PWM duty cycle
         self.turn_speed_factor = 0.5  # How much to reduce inside wheel speed when turning
         
         # Safety timeout - stop if no command received for this long
@@ -66,6 +69,7 @@ class MotorControlNode(Node):
         
         self.get_logger().info('Motor control node started')
         self.get_logger().info('Subscribing to: /freenove/cmd_vel')
+        self.get_logger().info(f'Base speed: {self.base_speed} (PWM range: 0-{self.max_speed})')
         self.get_logger().info('Send Twist messages to control the robot!')
     
     def cmd_vel_callback(self, msg):
@@ -112,7 +116,7 @@ class MotorControlNode(Node):
             angular_z: Turning velocity (-1.0 to 1.0 normalized)
         
         Returns:
-            (left_speed, right_speed): Motor speeds from -100 to 100
+            (left_speed, right_speed): Motor speeds from -4095 to 4095
         """
         # Normalize linear velocity to motor power
         forward_power = linear_x * self.base_speed
@@ -125,9 +129,9 @@ class MotorControlNode(Node):
         left_speed = forward_power - turn_adjustment
         right_speed = forward_power + turn_adjustment
         
-        # Clamp to valid range
-        left_speed = max(min(left_speed, 100), -100)
-        right_speed = max(min(right_speed, 100), -100)
+        # ✅ FIXED: Clamp to valid PWM range (-4095 to 4095)
+        left_speed = max(min(left_speed, self.max_speed), -self.max_speed)
+        right_speed = max(min(right_speed, self.max_speed), -self.max_speed)
         
         return int(left_speed), int(right_speed)
     
@@ -136,16 +140,17 @@ class MotorControlNode(Node):
         Send speed commands to physical motors
         
         Args:
-            left_speed: Speed for left motors (-100 to 100)
-            right_speed: Speed for right motors (-100 to 100)
+            left_speed: Speed for left motors (-4095 to 4095)
+            right_speed: Speed for right motors (-4095 to 4095)
         """
         try:
+            # ✅ FIXED: Correct method name (snake_case)
             # Freenove motor library:
-            # setMotorModel(motor1, motor2, motor3, motor4)
-            # For 4WD: motors 1,2 are left side, motors 3,4 are right side
+            # set_motor_model(duty1, duty2, duty3, duty4)
+            # For 4WD: duty1,duty2 are left side, duty3,duty4 are right side
             # Positive = forward, negative = backward
             
-            self.motor.setMotorModel(left_speed, left_speed, right_speed, right_speed)
+            self.motor.set_motor_model(left_speed, left_speed, right_speed, right_speed)
             
         except Exception as e:
             self.get_logger().error(f'Failed to set motor speeds: {e}')
@@ -155,7 +160,7 @@ class MotorControlNode(Node):
         Emergency stop - set all motors to zero
         """
         try:
-            self.motor.setMotorModel(0, 0, 0, 0)
+            self.motor.set_motor_model(0, 0, 0, 0)  # ✅ FIXED: Correct method name
             self.get_logger().info('Motors stopped')
         except Exception as e:
             self.get_logger().error(f'Failed to stop motors: {e}')
@@ -177,6 +182,7 @@ class MotorControlNode(Node):
         """
         self.get_logger().info('Shutting down motor control node...')
         self.stop_motors()
+        self.motor.close()  # ✅ FIXED: Added proper cleanup
         super().destroy_node()
 
 
